@@ -2,8 +2,9 @@ use anyhow::anyhow;
 use ffi::create_nyxstone_ffi;
 use ffi::LabelDefinition;
 
-// Re-export Instruction
+// Re-export Instruction and SemanticInfo
 pub use crate::ffi::Instruction;
+pub use crate::ffi::SemanticInfo;
 
 /// Public interface for calling nyxstone from rust.
 /// # Examples
@@ -285,6 +286,39 @@ mod ffi {
         pub address: u64,
     }
 
+    /// Semantic information about an instruction (from LLVM MCInstrDesc).
+    /// Only available when disassembling.
+    #[derive(Clone, Debug, PartialEq, Eq, Default)]
+    pub struct SemanticInfo {
+        // Control flow properties
+        pub is_branch: bool,
+        pub is_call: bool,
+        pub is_return: bool,
+        pub is_conditional_branch: bool,
+        pub is_unconditional_branch: bool,
+        pub is_indirect_branch: bool,
+        pub is_terminator: bool,
+        pub is_barrier: bool,
+
+        // Memory operations
+        pub may_load: bool,
+        pub may_store: bool,
+        pub can_fold_as_load: bool,
+
+        // Instruction classification
+        pub is_add: bool,
+        pub is_compare: bool,
+        pub is_move_reg: bool,
+        pub is_move_immediate: bool,
+        pub is_trap: bool,
+        pub is_pseudo: bool,
+
+        // Other properties
+        pub has_unmodeled_side_effects: bool,
+        pub num_operands: u16,
+        pub num_defs: u16,
+    }
+
     /// Instruction details
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct Instruction {
@@ -294,6 +328,10 @@ mod ffi {
         pub assembly: String,
         /// Byte code of the instruction.
         pub bytes: Vec<u8>,
+        /// Flag indicating if semantic_info is valid (only true for disassembly)
+        pub has_semantic_info: bool,
+        /// Semantic information (only valid when has_semantic_info is true)
+        pub semantic_info: SemanticInfo,
     }
 
     pub struct ByteResult {

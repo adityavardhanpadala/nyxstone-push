@@ -1,6 +1,7 @@
 #pragma once
 
 #include <expected.hpp>
+#include <optional>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -28,6 +29,61 @@ public:
         uint64_t address;
     };
 
+    /// @brief Semantic information about an instruction (from MCInstrDesc).
+    /// Only available when disassembling.
+    struct SemanticInfo {
+        // Control flow properties
+        bool is_branch;
+        bool is_call;
+        bool is_return;
+        bool is_conditional_branch;
+        bool is_unconditional_branch;
+        bool is_indirect_branch;
+        bool is_terminator;
+        bool is_barrier;
+
+        // Memory operations
+        bool may_load;
+        bool may_store;
+        bool can_fold_as_load;
+
+        // Instruction classification
+        bool is_add;
+        bool is_compare;
+        bool is_move_reg;
+        bool is_move_immediate;
+        bool is_trap;
+        bool is_pseudo;
+
+        // Other properties
+        bool has_unmodeled_side_effects;
+        uint16_t num_operands;
+        uint16_t num_defs;
+
+        bool operator==(const SemanticInfo& other) const {
+            return is_branch == other.is_branch &&
+                   is_call == other.is_call &&
+                   is_return == other.is_return &&
+                   is_conditional_branch == other.is_conditional_branch &&
+                   is_unconditional_branch == other.is_unconditional_branch &&
+                   is_indirect_branch == other.is_indirect_branch &&
+                   is_terminator == other.is_terminator &&
+                   is_barrier == other.is_barrier &&
+                   may_load == other.may_load &&
+                   may_store == other.may_store &&
+                   can_fold_as_load == other.can_fold_as_load &&
+                   is_add == other.is_add &&
+                   is_compare == other.is_compare &&
+                   is_move_reg == other.is_move_reg &&
+                   is_move_immediate == other.is_move_immediate &&
+                   is_trap == other.is_trap &&
+                   is_pseudo == other.is_pseudo &&
+                   has_unmodeled_side_effects == other.has_unmodeled_side_effects &&
+                   num_operands == other.num_operands &&
+                   num_defs == other.num_defs;
+        }
+    };
+
     /// @brief Complete instruction information.
     struct Instruction {
         /// The absolute address of the instruction
@@ -36,6 +92,8 @@ public:
         std::string assembly;
         /// The byte code of the instruction
         std::vector<uint8_t> bytes {};
+        /// Semantic information about the instruction (only available for disassembly)
+        std::optional<SemanticInfo> semantic_info;
 
         bool operator==(const Instruction& other) const;
     };

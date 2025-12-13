@@ -1,39 +1,11 @@
 #include "nyxstone_ffi.hpp"
+#include "nyxstone/src/lib.rs.h"  // CXX bridge generated types
 
 #include <expected.hpp>
 
 using namespace nyxstone;
 
-struct LabelDefinition final {
-    rust::str name {};
-    uint64_t address = 0;
-};
-
-struct Instruction final {
-    uint64_t address = 0;
-    rust::String assembly {};
-    rust::Vec<uint8_t> bytes {};
-};
-
-struct NyxstoneResult {
-    std::unique_ptr<NyxstoneFFI> ok;
-    rust::String error;
-};
-
-struct ByteResult {
-    rust::Vec<uint8_t> ok;
-    rust::String error;
-};
-
-struct InstructionResult {
-    rust::Vec<Instruction> ok;
-    rust::String error;
-};
-
-struct StringResult {
-    rust::String ok;
-    rust::String error;
-};
+// CXX bridge types are now defined in lib.rs.h
 
 ByteResult NyxstoneFFI::assemble(
     const rust::str assembly, uint64_t address, const rust::Slice<const LabelDefinition> labels) const
@@ -72,8 +44,15 @@ InstructionResult NyxstoneFFI::assemble_to_instructions(
                               rust::Vec<uint8_t> insn_bytes;
                               insn_bytes.reserve(cpp_insn.bytes.size());
                               std::copy(cpp_insn.bytes.begin(), cpp_insn.bytes.end(), std::back_inserter(insn_bytes));
-                              instructions.push_back(
-                                  { cpp_insn.address, rust::String(cpp_insn.assembly), std::move(insn_bytes) });
+
+                              // Assembly operations don't have semantic info
+                              Instruction insn;
+                              insn.address = cpp_insn.address;
+                              insn.assembly = rust::String(cpp_insn.assembly);
+                              insn.bytes = std::move(insn_bytes);
+                              insn.has_semantic_info = false;
+                              insn.semantic_info = SemanticInfo {};  // Default-constructed
+                              instructions.push_back(std::move(insn));
                           }
                           return instructions;
                       });
@@ -110,7 +89,41 @@ InstructionResult NyxstoneFFI::disassemble_to_instructions(
                   rust::Vec<uint8_t> insn_bytes;
                   insn_bytes.reserve(cpp_insn.bytes.size());
                   std::copy(cpp_insn.bytes.begin(), cpp_insn.bytes.end(), std::back_inserter(insn_bytes));
-                  instructions.push_back({ cpp_insn.address, rust::String(cpp_insn.assembly), std::move(insn_bytes) });
+
+                  // Convert semantic info if present
+                  bool has_semantic = cpp_insn.semantic_info.has_value();
+                  SemanticInfo semantic_info {};
+                  if (has_semantic) {
+                      const auto& si = cpp_insn.semantic_info.value();
+                      semantic_info.is_branch = si.is_branch;
+                      semantic_info.is_call = si.is_call;
+                      semantic_info.is_return = si.is_return;
+                      semantic_info.is_conditional_branch = si.is_conditional_branch;
+                      semantic_info.is_unconditional_branch = si.is_unconditional_branch;
+                      semantic_info.is_indirect_branch = si.is_indirect_branch;
+                      semantic_info.is_terminator = si.is_terminator;
+                      semantic_info.is_barrier = si.is_barrier;
+                      semantic_info.may_load = si.may_load;
+                      semantic_info.may_store = si.may_store;
+                      semantic_info.can_fold_as_load = si.can_fold_as_load;
+                      semantic_info.is_add = si.is_add;
+                      semantic_info.is_compare = si.is_compare;
+                      semantic_info.is_move_reg = si.is_move_reg;
+                      semantic_info.is_move_immediate = si.is_move_immediate;
+                      semantic_info.is_trap = si.is_trap;
+                      semantic_info.is_pseudo = si.is_pseudo;
+                      semantic_info.has_unmodeled_side_effects = si.has_unmodeled_side_effects;
+                      semantic_info.num_operands = si.num_operands;
+                      semantic_info.num_defs = si.num_defs;
+                  }
+
+                  Instruction insn;
+                  insn.address = cpp_insn.address;
+                  insn.assembly = rust::String(cpp_insn.assembly);
+                  insn.bytes = std::move(insn_bytes);
+                  insn.has_semantic_info = has_semantic;
+                  insn.semantic_info = semantic_info;
+                  instructions.push_back(std::move(insn));
               }
               return instructions;
           });

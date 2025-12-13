@@ -48,6 +48,9 @@ if(NYXSTONE_SANITIZERS)
     add_link_options(-fsanitize=address,undefined)
 endif()
 
+# Disable RTTI to match LLVM build configuration
+add_compile_options(-fno-rtti)
+
 add_library(nyxstone ${nyxstone_SOURCES})
 add_library(nyxstone::nyxstone ALIAS nyxstone)
 
@@ -79,7 +82,13 @@ if(NYXSTONE_BUILD_EXAMPLES)
         nyxstone::nyxstone
     )
 
+    add_executable(test_semantic_info test_semantic_info.cpp)
+    target_link_libraries(test_semantic_info PRIVATE
+        nyxstone::nyxstone
+    )
+
     include(CTest)
     add_test(NAME TestExample COMMAND $<TARGET_FILE:example>)
     add_test(NAME TestCLI COMMAND "${CMAKE_CURRENT_LIST_DIR}/tool/test-cli.sh")
+    add_test(NAME TestSemanticInfo COMMAND $<TARGET_FILE:test_semantic_info>)
 endif()

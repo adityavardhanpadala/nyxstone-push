@@ -457,6 +457,41 @@ tl::expected<void, std::string> Nyxstone::disassemble_impl(const std::vector<uin
             new_insn.assembly = insn_str;
             new_insn.bytes.reserve(insn_size);
             std::copy(data.begin() + pos, data.begin() + pos + insn_size, std::back_inserter(new_insn.bytes));
+
+            // Extract semantic information from MCInstrDesc
+            Nyxstone::SemanticInfo semantic_info;
+            const auto& instr_desc = instruction_info->get(insn.getOpcode());
+
+            // Control flow properties
+            semantic_info.is_branch = instr_desc.isBranch();
+            semantic_info.is_call = instr_desc.isCall();
+            semantic_info.is_return = instr_desc.isReturn();
+            semantic_info.is_conditional_branch = instr_desc.isConditionalBranch();
+            semantic_info.is_unconditional_branch = instr_desc.isUnconditionalBranch();
+            semantic_info.is_indirect_branch = instr_desc.isIndirectBranch();
+            semantic_info.is_terminator = instr_desc.isTerminator();
+            semantic_info.is_barrier = instr_desc.isBarrier();
+
+            // Memory operations
+            semantic_info.may_load = instr_desc.mayLoad();
+            semantic_info.may_store = instr_desc.mayStore();
+            semantic_info.can_fold_as_load = instr_desc.canFoldAsLoad();
+
+            // Instruction classification
+            semantic_info.is_add = instr_desc.isAdd();
+            semantic_info.is_compare = instr_desc.isCompare();
+            semantic_info.is_move_reg = instr_desc.isMoveReg();
+            semantic_info.is_move_immediate = instr_desc.isMoveImmediate();
+            semantic_info.is_trap = instr_desc.isTrap();
+            semantic_info.is_pseudo = instr_desc.isPseudo();
+
+            // Other properties
+            semantic_info.has_unmodeled_side_effects = instr_desc.hasUnmodeledSideEffects();
+            semantic_info.num_operands = instr_desc.getNumOperands();
+            semantic_info.num_defs = instr_desc.getNumDefs();
+
+            new_insn.semantic_info = semantic_info;
+
             instructions->push_back(new_insn);
         }
 

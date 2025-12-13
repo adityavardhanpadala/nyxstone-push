@@ -97,6 +97,7 @@ fn main() {
     // Import Nyxstone C++ lib
     cxx_build::bridge("src/lib.rs")
         .std("c++17")
+        .flag("-fno-rtti")  // Disable RTTI to match LLVM build configuration
         .include("nyxstone/include")
         .include("nyxstone/vendor")
         .include(llvm_include_dir.trim())

@@ -3,7 +3,7 @@ fn main() {}
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
-    use nyxstone::{Instruction, IntegerBase, Nyxstone, NyxstoneConfig};
+    use nyxstone::{Instruction, IntegerBase, Nyxstone, NyxstoneConfig, SemanticInfo};
     use std::{assert_eq, collections::HashMap};
 
     #[test]
@@ -116,7 +116,9 @@ mod tests {
             vec![Instruction {
                 address: 0x1000,
                 assembly: "mov rax, rax".into(),
-                bytes: vec![0x48, 0x89, 0xc0]
+                bytes: vec![0x48, 0x89, 0xc0],
+                has_semantic_info: false,
+                semantic_info: SemanticInfo::default()
             }]
         );
 
@@ -127,31 +129,27 @@ mod tests {
             vec![Instruction {
                 address: 0x1000,
                 assembly: "bne .label".into(),
-                bytes: vec![0x06, 0xd1]
+                bytes: vec![0x06, 0xd1],
+                has_semantic_info: false,
+                semantic_info: SemanticInfo::default()
             }]
         );
 
         let result = nyxstone_x86_64.disassemble_to_instructions(&[0x48, 0x89, 0xc0], 0x1000, 0)?;
 
-        assert_eq!(
-            result,
-            vec![Instruction {
-                address: 0x1000,
-                assembly: "mov rax, rax".into(),
-                bytes: vec![0x48, 0x89, 0xc0]
-            }]
-        );
+        // Just check the basic fields, not semantic info for this validation test
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].address, 0x1000);
+        assert_eq!(result[0].assembly, "mov rax, rax");
+        assert_eq!(result[0].bytes, vec![0x48, 0x89, 0xc0]);
 
         let result = nyxstone_armv8m.disassemble_to_instructions(&[0x06, 0xd1], 0x1000, 0)?;
 
-        assert_eq!(
-            result,
-            vec![Instruction {
-                address: 0x1000,
-                assembly: "bne #12".into(),
-                bytes: vec![0x06, 0xd1]
-            }]
-        );
+        // Just check the basic fields, not semantic info for this validation test
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].address, 0x1000);
+        assert_eq!(result[0].assembly, "bne #12");
+        assert_eq!(result[0].bytes, vec![0x06, 0xd1]);
 
         Ok(())
     }
@@ -302,14 +300,11 @@ mod tests {
 
         let instructions = nyxstone_armv8m.disassemble_to_instructions(&bytes, 0x1000, 0)?;
 
-        assert_eq!(
-            instructions,
-            vec![Instruction {
-                address: 0x1000,
-                assembly: "vadd.f16 s0, s1, s2".into(),
-                bytes: vec![0x30, 0xee, 0x81, 0x09],
-            }]
-        );
+        // Just check the basic fields, not semantic info for this validation test
+        assert_eq!(instructions.len(), 1);
+        assert_eq!(instructions[0].address, 0x1000);
+        assert_eq!(instructions[0].assembly, "vadd.f16 s0, s1, s2");
+        assert_eq!(instructions[0].bytes, vec![0x30, 0xee, 0x81, 0x09]);
 
         Ok(())
     }
