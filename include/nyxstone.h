@@ -48,7 +48,7 @@ public:
         bool can_fold_as_load;
 
         // Instruction classification
-        bool is_add;
+        bool is_add_unreliable;
         bool is_compare;
         bool is_move_reg;
         bool is_move_immediate;
@@ -72,7 +72,7 @@ public:
                    may_load == other.may_load &&
                    may_store == other.may_store &&
                    can_fold_as_load == other.can_fold_as_load &&
-                   is_add == other.is_add &&
+                   is_add_unreliable == other.is_add_unreliable &&
                    is_compare == other.is_compare &&
                    is_move_reg == other.is_move_reg &&
                    is_move_immediate == other.is_move_immediate &&

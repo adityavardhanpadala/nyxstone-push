@@ -22,7 +22,7 @@ fn print_semantic_info(insn: &nyxstone::Instruction) {
         if sem.may_load { println!("    - may_load"); }
         if sem.may_store { println!("    - may_store"); }
         if sem.can_fold_as_load { println!("    - can_fold_as_load"); }
-        if sem.is_add { println!("    - is_add"); }
+        if sem.is_add_unreliable { println!("    - is_add"); }
         if sem.is_compare { println!("    - is_compare"); }
         if sem.is_move_reg { println!("    - is_move_reg"); }
         if sem.is_move_immediate { println!("    - is_move_immediate"); }

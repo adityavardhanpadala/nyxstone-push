@@ -96,8 +96,17 @@ fn main() -> Result<()> {
         }
         Command::Disassemble { disassembly } => {
             let disassembly = nyxstone.disassemble_to_instructions(&disassembly, address, 0)?;
-
-            print_instructions(&disassembly);
+            disassembly.iter().for_each(|instruction| {
+                println!(
+                    "{:08x}: {:16} -- {:02x?}",
+                    instruction.address, instruction.assembly, instruction.bytes
+                );
+                if instruction.has_semantic_info {
+                    println!("Semantic Info:");
+                    println!("{:?}", instruction.semantic_info);
+                }
+            });
+            // print_instructions(&disassembly);
         }
     }
 

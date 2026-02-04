@@ -106,7 +106,7 @@ InstructionResult NyxstoneFFI::disassemble_to_instructions(
                       semantic_info.may_load = si.may_load;
                       semantic_info.may_store = si.may_store;
                       semantic_info.can_fold_as_load = si.can_fold_as_load;
-                      semantic_info.is_add = si.is_add;
+                      semantic_info.is_add_unreliable = si.is_add_unreliable;
                       semantic_info.is_compare = si.is_compare;
                       semantic_info.is_move_reg = si.is_move_reg;
                       semantic_info.is_move_immediate = si.is_move_immediate;

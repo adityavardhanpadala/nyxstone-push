@@ -11,7 +11,7 @@ pub use crate::ffi::SemanticInfo;
 ///
 /// ```rust
 /// # use std::collections::HashMap;
-/// # use nyxstone::{Nyxstone, NyxstoneConfig, Instruction};
+/// # use nyxstone::{Nyxstone, NyxstoneConfig, Instruction, SemanticInfo};
 /// # fn main() -> anyhow::Result<()> {
 /// let nyxstone = Nyxstone::new("x86_64", NyxstoneConfig::default())?;
 ///
@@ -22,7 +22,9 @@ pub use crate::ffi::SemanticInfo;
 ///      vec![Instruction {
 ///          address: 0x1000,
 ///          assembly: "mov rax, rbx".into(),
-///          bytes: vec![0x48, 0x89, 0xd8]
+///          bytes: vec![0x48, 0x89, 0xd8],
+///          has_semantic_info: false,
+///          semantic_info: SemanticInfo::default(),
 ///      }]
 /// );
 /// # Ok(())
@@ -288,6 +290,8 @@ mod ffi {
 
     /// Semantic information about an instruction (from LLVM MCInstrDesc).
     /// Only available when disassembling.
+    /// NOTE: is_add is unreliable, do not use it as a reliable indicator of addition instructions.
+    /// x86 does not set is_add in it's API since LLVM devs assumed that shit is pointless.
     #[derive(Clone, Debug, PartialEq, Eq, Default)]
     pub struct SemanticInfo {
         // Control flow properties
@@ -306,7 +310,7 @@ mod ffi {
         pub can_fold_as_load: bool,
 
         // Instruction classification
-        pub is_add: bool,
+        pub is_add_unreliable: bool,
         pub is_compare: bool,
         pub is_move_reg: bool,
         pub is_move_immediate: bool,

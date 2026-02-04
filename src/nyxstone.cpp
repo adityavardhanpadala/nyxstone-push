@@ -478,7 +478,7 @@ tl::expected<void, std::string> Nyxstone::disassemble_impl(const std::vector<uin
             semantic_info.can_fold_as_load = instr_desc.canFoldAsLoad();
 
             // Instruction classification
-            semantic_info.is_add = instr_desc.isAdd();
+            semantic_info.is_add_unreliable = instr_desc.isAdd();
             semantic_info.is_compare = instr_desc.isCompare();
             semantic_info.is_move_reg = instr_desc.isMoveReg();
             semantic_info.is_move_immediate = instr_desc.isMoveImmediate();
@@ -513,7 +513,7 @@ tl::expected<void, std::string> Nyxstone::disassemble_impl(const std::vector<uin
 
 bool Nyxstone::Instruction::operator==(const Instruction& other) const
 {
-    return address == other.address && assembly == other.assembly && bytes == other.bytes;
+    return address == other.address && assembly == other.assembly && bytes == other.bytes && semantic_info == other.semantic_info;
 }
 
 /// Detects all ARM Thumb architectures. LLVM doesn't seem to have a short way to check this.

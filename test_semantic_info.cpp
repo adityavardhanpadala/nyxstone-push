@@ -24,7 +24,7 @@ void print_semantic_info(const nyxstone::Nyxstone::Instruction& insn) {
         if (sem.may_load) std::cout << "    - may_load\n";
         if (sem.may_store) std::cout << "    - may_store\n";
         if (sem.can_fold_as_load) std::cout << "    - can_fold_as_load\n";
-        if (sem.is_add) std::cout << "    - is_add\n";
+        if (sem.is_add_unreliable) std::cout << "    - is_add_unreliable\n";
         if (sem.is_compare) std::cout << "    - is_compare\n";
         if (sem.is_move_reg) std::cout << "    - is_move_reg\n";
         if (sem.is_move_immediate) std::cout << "    - is_move_immediate\n";
@@ -110,7 +110,7 @@ int main() {
         }
     }
 
-    // Test 7: ADD (is_add)
+    // Test 7: ADD (is_add_unreliable)
     std::cout << "Test 7: ADD instruction\n";
     std::vector<uint8_t> add_bytes = {0x48, 0x01, 0xd8};  // add rax, rbx
     auto add_result = nyxstone->disassemble_to_instructions(add_bytes, 0x7000, 0);
