@@ -142,7 +142,7 @@ impl Nyxstone {
     /// - `assembly`: The instructions to assemble.
     /// - `address`: The start location of the instructions.
     /// - `labels`: Additional label definitions by absolute address, expects a reference to some `Map<AsRef<str>, u64>`
-    ///             which can be iterated over.
+    ///   which can be iterated over.
     ///
     /// # Returns:
     /// Ok() and bytecode on success, Err() otherwise.
@@ -290,10 +290,21 @@ mod ffi {
 
     /// Semantic information about an instruction (from LLVM MCInstrDesc).
     /// Only available when disassembling.
-    /// NOTE: is_add is unreliable, do not use it as a reliable indicator of addition instructions.
-    /// x86 does not set is_add in it's API since LLVM devs assumed that shit is pointless.
+    ///
+    /// Named fields are provided for reliable structural properties (control flow,
+    /// memory operations). For instruction classification, use `opcode_name` for
+    /// precise identification or `flags`/`target_flags` for raw MCInstrDesc access.
+    /// Use the `mcid_flags` module constants to test individual bits in `flags`.
     #[derive(Clone, Debug, PartialEq, Eq, Default)]
     pub struct SemanticInfo {
+        /// LLVM opcode name (e.g. "ADD64rr", "MOV64rr", "JMP_1")
+        pub opcode_name: String,
+
+        /// Raw MCInstrDesc flags bitmask (MCID::Flag enum values)
+        pub flags: u64,
+        /// Target-specific flags from MCInstrDesc::TSFlags
+        pub target_flags: u64,
+
         // Control flow properties
         pub is_branch: bool,
         pub is_call: bool,
@@ -307,14 +318,8 @@ mod ffi {
         // Memory operations
         pub may_load: bool,
         pub may_store: bool,
-        pub can_fold_as_load: bool,
 
         // Instruction classification
-        pub is_add_unreliable: bool,
-        pub is_compare: bool,
-        pub is_move_reg: bool,
-        pub is_move_immediate: bool,
-        pub is_trap: bool,
         pub is_pseudo: bool,
 
         // Other properties
@@ -414,3 +419,68 @@ mod ffi {
 }
 
 unsafe impl Send for ffi::NyxstoneFFI {}
+
+impl ffi::Instruction {
+    /// Returns the semantic information for this instruction, if available.
+    /// Semantic info is only populated for disassembled instructions, not assembled ones.
+    pub fn semantics(&self) -> Option<&ffi::SemanticInfo> {
+        if self.has_semantic_info {
+            Some(&self.semantic_info)
+        } else {
+            None
+        }
+    }
+}
+
+/// Bit positions for MCID::Flag values from LLVM 18 MCInstrDesc.h.
+///
+/// Use these constants to test individual bits in `SemanticInfo::flags`:
+/// ```ignore
+/// use nyxstone::mcid_flags;
+/// if sem.flags & (1 << mcid_flags::COMPARE) != 0 {
+///     // instruction is a compare
+/// }
+/// ```
+pub mod mcid_flags {
+    pub const PRE_ISEL_OPCODE: u32 = 0;
+    pub const VARIADIC: u32 = 1;
+    pub const HAS_OPTIONAL_DEF: u32 = 2;
+    pub const PSEUDO: u32 = 3;
+    pub const META: u32 = 4;
+    pub const RETURN: u32 = 5;
+    pub const EH_SCOPE_RETURN: u32 = 6;
+    pub const CALL: u32 = 7;
+    pub const BARRIER: u32 = 8;
+    pub const TERMINATOR: u32 = 9;
+    pub const BRANCH: u32 = 10;
+    pub const INDIRECT_BRANCH: u32 = 11;
+    pub const COMPARE: u32 = 12;
+    pub const MOVE_IMM: u32 = 13;
+    pub const MOVE_REG: u32 = 14;
+    pub const BITCAST: u32 = 15;
+    pub const SELECT: u32 = 16;
+    pub const DELAY_SLOT: u32 = 17;
+    pub const FOLDABLE_AS_LOAD: u32 = 18;
+    pub const MAY_LOAD: u32 = 19;
+    pub const MAY_STORE: u32 = 20;
+    pub const MAY_RAISE_FP_EXCEPTION: u32 = 21;
+    pub const PREDICABLE: u32 = 22;
+    pub const NOT_DUPLICABLE: u32 = 23;
+    pub const UNMODELED_SIDE_EFFECTS: u32 = 24;
+    pub const COMMUTABLE: u32 = 25;
+    pub const CONVERTIBLE_TO_3_ADDR: u32 = 26;
+    pub const USES_CUSTOM_INSERTER: u32 = 27;
+    pub const HAS_POST_ISEL_HOOK: u32 = 28;
+    pub const REMATERIALIZABLE: u32 = 29;
+    pub const CHEAP_AS_A_MOVE: u32 = 30;
+    pub const EXTRA_SRC_REG_ALLOC_REQ: u32 = 31;
+    pub const EXTRA_DEF_REG_ALLOC_REQ: u32 = 32;
+    pub const REG_SEQUENCE: u32 = 33;
+    pub const EXTRACT_SUBREG: u32 = 34;
+    pub const INSERT_SUBREG: u32 = 35;
+    pub const CONVERGENT: u32 = 36;
+    pub const ADD: u32 = 37;
+    pub const TRAP: u32 = 38;
+    pub const VARIADIC_OPS_ARE_DEFS: u32 = 39;
+    pub const AUTHENTICATED: u32 = 40;
+}

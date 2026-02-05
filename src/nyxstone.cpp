@@ -462,6 +462,11 @@ tl::expected<void, std::string> Nyxstone::disassemble_impl(const std::vector<uin
             Nyxstone::SemanticInfo semantic_info;
             const auto& instr_desc = instruction_info->get(insn.getOpcode());
 
+            // Opcode name and raw flags
+            semantic_info.opcode_name = instruction_info->getName(insn.getOpcode()).str();
+            semantic_info.flags = instr_desc.getFlags();
+            semantic_info.target_flags = instr_desc.TSFlags;
+
             // Control flow properties
             semantic_info.is_branch = instr_desc.isBranch();
             semantic_info.is_call = instr_desc.isCall();
@@ -475,14 +480,8 @@ tl::expected<void, std::string> Nyxstone::disassemble_impl(const std::vector<uin
             // Memory operations
             semantic_info.may_load = instr_desc.mayLoad();
             semantic_info.may_store = instr_desc.mayStore();
-            semantic_info.can_fold_as_load = instr_desc.canFoldAsLoad();
 
             // Instruction classification
-            semantic_info.is_add_unreliable = instr_desc.isAdd();
-            semantic_info.is_compare = instr_desc.isCompare();
-            semantic_info.is_move_reg = instr_desc.isMoveReg();
-            semantic_info.is_move_immediate = instr_desc.isMoveImmediate();
-            semantic_info.is_trap = instr_desc.isTrap();
             semantic_info.is_pseudo = instr_desc.isPseudo();
 
             // Other properties
@@ -513,7 +512,8 @@ tl::expected<void, std::string> Nyxstone::disassemble_impl(const std::vector<uin
 
 bool Nyxstone::Instruction::operator==(const Instruction& other) const
 {
-    return address == other.address && assembly == other.assembly && bytes == other.bytes && semantic_info == other.semantic_info;
+    return address == other.address && assembly == other.assembly && bytes == other.bytes
+        && semantic_info == other.semantic_info;
 }
 
 /// Detects all ARM Thumb architectures. LLVM doesn't seem to have a short way to check this.

@@ -1,5 +1,5 @@
 #include "nyxstone_ffi.hpp"
-#include "nyxstone/src/lib.rs.h"  // CXX bridge generated types
+#include "nyxstone/src/lib.rs.h" // CXX bridge generated types
 
 #include <expected.hpp>
 
@@ -12,9 +12,8 @@ ByteResult NyxstoneFFI::assemble(
 {
     std::vector<Nyxstone::LabelDefinition> cpp_labels {};
     cpp_labels.reserve(labels.size());
-    std::transform(std::begin(labels), std::end(labels), std::back_inserter(cpp_labels), [](const auto& label) {
-        return Nyxstone::LabelDefinition { std::string(label.name), label.address };
-    });
+    std::transform(std::begin(labels), std::end(labels), std::back_inserter(cpp_labels),
+        [](const auto& label) { return Nyxstone::LabelDefinition { std::string(label.name), label.address }; });
 
     auto result = nyxstone->assemble(std::string { assembly }, address, cpp_labels).map([](const auto& cpp_bytes) {
         rust::Vec<uint8_t> bytes {};
@@ -31,9 +30,8 @@ InstructionResult NyxstoneFFI::assemble_to_instructions(
 {
     std::vector<Nyxstone::LabelDefinition> cpp_labels;
     cpp_labels.reserve(labels.size());
-    std::transform(std::begin(labels), std::end(labels), std::back_inserter(cpp_labels), [](const auto& label) {
-        return Nyxstone::LabelDefinition { std::string(label.name), label.address };
-    });
+    std::transform(std::begin(labels), std::end(labels), std::back_inserter(cpp_labels),
+        [](const auto& label) { return Nyxstone::LabelDefinition { std::string(label.name), label.address }; });
     std::vector<Nyxstone::Instruction> cpp_instructions {};
 
     auto result = nyxstone->assemble_to_instructions(std::string { assembly }, address, cpp_labels)
@@ -51,7 +49,7 @@ InstructionResult NyxstoneFFI::assemble_to_instructions(
                               insn.assembly = rust::String(cpp_insn.assembly);
                               insn.bytes = std::move(insn_bytes);
                               insn.has_semantic_info = false;
-                              insn.semantic_info = SemanticInfo {};  // Default-constructed
+                              insn.semantic_info = SemanticInfo {}; // Default-constructed
                               instructions.push_back(std::move(insn));
                           }
                           return instructions;
@@ -95,6 +93,9 @@ InstructionResult NyxstoneFFI::disassemble_to_instructions(
                   SemanticInfo semantic_info {};
                   if (has_semantic) {
                       const auto& si = cpp_insn.semantic_info.value();
+                      semantic_info.opcode_name = rust::String(si.opcode_name);
+                      semantic_info.flags = si.flags;
+                      semantic_info.target_flags = si.target_flags;
                       semantic_info.is_branch = si.is_branch;
                       semantic_info.is_call = si.is_call;
                       semantic_info.is_return = si.is_return;
@@ -105,12 +106,6 @@ InstructionResult NyxstoneFFI::disassemble_to_instructions(
                       semantic_info.is_barrier = si.is_barrier;
                       semantic_info.may_load = si.may_load;
                       semantic_info.may_store = si.may_store;
-                      semantic_info.can_fold_as_load = si.can_fold_as_load;
-                      semantic_info.is_add_unreliable = si.is_add_unreliable;
-                      semantic_info.is_compare = si.is_compare;
-                      semantic_info.is_move_reg = si.is_move_reg;
-                      semantic_info.is_move_immediate = si.is_move_immediate;
-                      semantic_info.is_trap = si.is_trap;
                       semantic_info.is_pseudo = si.is_pseudo;
                       semantic_info.has_unmodeled_side_effects = si.has_unmodeled_side_effects;
                       semantic_info.num_operands = si.num_operands;

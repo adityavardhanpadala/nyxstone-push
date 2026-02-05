@@ -21,10 +21,10 @@ int main(int /*argc*/, char** /*argv*/)
 
     // Assemble with additional information
     std::vector<Nyxstone::Instruction> instrs { nyxstone
-                                                    ->assemble_to_instructions(
-                                                        /*assembly=*/"mov rax, rbx", /*address=*/0x1000,
-                                                        /*labels=*/ {})
-                                                    .value() };
+            ->assemble_to_instructions(
+                /*assembly=*/"mov rax, rbx", /*address=*/0x1000,
+                /*labels=*/ {})
+            .value() };
     {
 
         const std::vector<Nyxstone::Instruction> expected { Nyxstone::Instruction { /*address=*/0x1000,
@@ -92,8 +92,7 @@ int main(int /*argc*/, char** /*argv*/)
     }
 
     // Configure nyxstone to your liking:
-    nyxstone = std::move(
-        NyxstoneBuilder("thumbv8")
+    nyxstone = std::move(NyxstoneBuilder("thumbv8")
             .with_cpu("cortex-m7")
             .with_immediate_style(NyxstoneBuilder::IntegerBase::HexPrefix) // Change the printing style of immediates
             .with_features("+mve.fp,+fp16") // Enable additional cpu features, here floating point instructions

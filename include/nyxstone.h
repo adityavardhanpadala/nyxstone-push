@@ -31,7 +31,19 @@ public:
 
     /// @brief Semantic information about an instruction (from MCInstrDesc).
     /// Only available when disassembling.
+    ///
+    /// Named fields are provided for reliable structural properties (control flow,
+    /// memory operations). For instruction classification, use `opcode_name` for
+    /// precise identification or `flags`/`target_flags` for raw MCInstrDesc access.
     struct SemanticInfo {
+        /// LLVM opcode name (e.g. "ADD64rr", "MOV64rr", "JMP_1")
+        std::string opcode_name;
+
+        /// Raw MCInstrDesc flags bitmask (MCID::Flag enum values)
+        uint64_t flags;
+        /// Target-specific flags from MCInstrDesc::TSFlags
+        uint64_t target_flags;
+
         // Control flow properties
         bool is_branch;
         bool is_call;
@@ -45,14 +57,8 @@ public:
         // Memory operations
         bool may_load;
         bool may_store;
-        bool can_fold_as_load;
 
         // Instruction classification
-        bool is_add_unreliable;
-        bool is_compare;
-        bool is_move_reg;
-        bool is_move_immediate;
-        bool is_trap;
         bool is_pseudo;
 
         // Other properties
@@ -60,27 +66,16 @@ public:
         uint16_t num_operands;
         uint16_t num_defs;
 
-        bool operator==(const SemanticInfo& other) const {
-            return is_branch == other.is_branch &&
-                   is_call == other.is_call &&
-                   is_return == other.is_return &&
-                   is_conditional_branch == other.is_conditional_branch &&
-                   is_unconditional_branch == other.is_unconditional_branch &&
-                   is_indirect_branch == other.is_indirect_branch &&
-                   is_terminator == other.is_terminator &&
-                   is_barrier == other.is_barrier &&
-                   may_load == other.may_load &&
-                   may_store == other.may_store &&
-                   can_fold_as_load == other.can_fold_as_load &&
-                   is_add_unreliable == other.is_add_unreliable &&
-                   is_compare == other.is_compare &&
-                   is_move_reg == other.is_move_reg &&
-                   is_move_immediate == other.is_move_immediate &&
-                   is_trap == other.is_trap &&
-                   is_pseudo == other.is_pseudo &&
-                   has_unmodeled_side_effects == other.has_unmodeled_side_effects &&
-                   num_operands == other.num_operands &&
-                   num_defs == other.num_defs;
+        bool operator==(const SemanticInfo& other) const
+        {
+            return opcode_name == other.opcode_name && flags == other.flags && target_flags == other.target_flags
+                && is_branch == other.is_branch && is_call == other.is_call && is_return == other.is_return
+                && is_conditional_branch == other.is_conditional_branch
+                && is_unconditional_branch == other.is_unconditional_branch
+                && is_indirect_branch == other.is_indirect_branch && is_terminator == other.is_terminator
+                && is_barrier == other.is_barrier && may_load == other.may_load && may_store == other.may_store
+                && is_pseudo == other.is_pseudo && has_unmodeled_side_effects == other.has_unmodeled_side_effects
+                && num_operands == other.num_operands && num_defs == other.num_defs;
         }
     };
 
@@ -228,7 +223,7 @@ public:
     ///       Using shorthand identifiers like `arm` can lead to Nyxstone not being able to assemble certain
     ///       instructions.
     explicit NyxstoneBuilder(std::string&& triple)
-        : m_triple(std::move(triple)) {};
+        : m_triple(std::move(triple)) { };
     NyxstoneBuilder(const NyxstoneBuilder&) = default;
     NyxstoneBuilder(NyxstoneBuilder&&) = default;
     NyxstoneBuilder& operator=(const NyxstoneBuilder&) = default;
