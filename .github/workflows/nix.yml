@@ -20,6 +20,7 @@ jobs:
       - uses: cachix/cachix-action@v15
         with:
           name: nyxstone
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - run: nix build .#checks.$(nix eval --impure --expr builtins.currentSystem | tr -d '"').cpp-llvm${{ matrix.llvm }}
 
   cpp-quality:
@@ -30,6 +31,7 @@ jobs:
       - uses: cachix/cachix-action@v15
         with:
           name: nyxstone
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - name: Format check
         run: nix develop --command ./tool/format.sh check
       - name: cppcheck
@@ -50,6 +52,7 @@ jobs:
       - uses: cachix/cachix-action@v15
         with:
           name: nyxstone
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - name: Build and test
         run: nix develop .#llvm${{ matrix.llvm }} --command bash -c "cd bindings/rust && cargo build && cargo test"
 
@@ -61,6 +64,7 @@ jobs:
       - uses: cachix/cachix-action@v15
         with:
           name: nyxstone
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - name: fmt + clippy
         run: nix develop --command bash -c "cd bindings/rust && cargo fmt --all -- --check && cargo clippy -- -D warnings"
 
@@ -77,5 +81,6 @@ jobs:
       - uses: cachix/cachix-action@v15
         with:
           name: nyxstone
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - name: Build and test
         run: nix develop .#llvm${{ matrix.llvm }} --command bash -c "cd bindings/python && uv venv .venv && source .venv/bin/activate && uv pip install . && python tests/test.py"
