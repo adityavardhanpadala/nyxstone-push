@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  cpp:
+    strategy:
+      fail-fast: false
+      matrix:
+        llvm: [16, 17, 18]
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v30
+      - uses: cachix/cachix-action@v15
+        with:
+          name: nyxstone
+      - run: nix build .#checks.$(nix eval --impure --expr builtins.currentSystem | tr -d '"').cpp-llvm${{ matrix.llvm }}
+
+  cpp-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v30
+      - uses: cachix/cachix-action@v15
+        with:
+          name: nyxstone
+      - name: Format check
+        run: nix develop --command ./tool/format.sh check
+      - name: cppcheck
+        run: nix develop --command ./tool/static-analysis-cppcheck.sh
+      - name: clang-tidy
+        run: nix develop --command ./tool/static-analysis-tidy.sh
+
+  rust:
+    strategy:
+      fail-fast: false
+      matrix:
+        llvm: [16, 17, 18]
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v30
+      - uses: cachix/cachix-action@v15
+        with:
+          name: nyxstone
+      - name: Build and test
+        run: nix develop .#llvm${{ matrix.llvm }} --command bash -c "cd bindings/rust && cargo build && cargo test"
+
+  rust-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v30
+      - uses: cachix/cachix-action@v15
+        with:
+          name: nyxstone
+      - name: fmt + clippy
+        run: nix develop --command bash -c "cd bindings/rust && cargo fmt --all -- --check && cargo clippy -- -D warnings"
+
+  python:
+    strategy:
+      fail-fast: false
+      matrix:
+        llvm: [16, 17, 18]
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v30
+      - uses: cachix/cachix-action@v15
+        with:
+          name: nyxstone
+      - name: Build and test
+        run: nix develop .#llvm${{ matrix.llvm }} --command bash -c "cd bindings/python && uv venv .venv && source .venv/bin/activate && uv pip install . && python tests/test.py"

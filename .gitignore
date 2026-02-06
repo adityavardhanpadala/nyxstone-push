@@ -4,6 +4,10 @@ build/
 # doc directory to discourage making changes in commit, since the CI updates the doxygen docs
 docs/
 
+# nix build output
+result
+result-*
+
 # language server files
 .cache/
 compile_commands.json
