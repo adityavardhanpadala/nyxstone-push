@@ -45,6 +45,7 @@
           ];
 
           shellHook = ''
+            export NYXSTONE_LLVM_PREFIX=${llvmPkgs.llvm.dev}
             export LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath [ llvmPkgs.llvm pkgs.zlib pkgs.zstd ]}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
           '';
         };
