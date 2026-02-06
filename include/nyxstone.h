@@ -223,7 +223,7 @@ public:
     ///       Using shorthand identifiers like `arm` can lead to Nyxstone not being able to assemble certain
     ///       instructions.
     explicit NyxstoneBuilder(std::string&& triple)
-        : m_triple(std::move(triple)) { };
+        : m_triple(std::move(triple)) {};
     NyxstoneBuilder(const NyxstoneBuilder&) = default;
     NyxstoneBuilder(NyxstoneBuilder&&) = default;
     NyxstoneBuilder& operator=(const NyxstoneBuilder&) = default;
